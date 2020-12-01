@@ -52,14 +52,6 @@ library(igraph)
 # "detach" command:
 #
 # detach(package:igraph)
-
-
-# Let's also install and load the *magrittr* package that allows 
-# us to write a sequence of functions to be applied on the same
-# data item as a pipeline (using the 'pipe' notation: %>%).
-# This makes the code more readable
-# install.packages('magrittr')
-library(magrittr)
  
  
 ###
@@ -202,7 +194,7 @@ summary(advice_net)
 # the advice tie. 
 
 # To view the adjacency matrix of the graph:
-advice_net %>% as_adjacency_matrix()
+as_adjacency_matrix(advice_net)
 
 # Note that vertices have the 'name' attribute
 # We can access it as follows:

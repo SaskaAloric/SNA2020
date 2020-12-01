@@ -22,18 +22,29 @@
 ###
 
 # Install and load the required libraries
+
 # install.packages('igraph')
 library(igraph)
+
 # install.packages('ggplot2')
 library(ggplot2)
+
 # install.packages('viridis')
 library(viridis)
 # Note: a package providing access to professionally created
 # colour palettes: https://github.com/sjmgarnier/viridis
 # install.packages('tidyr')
+
 library(tidyr)
 # Note: tidyr is a new package; we will need it for some tasks 
 # associated with manipulating data frames
+
+# install.packages('magrittr')
+library(magrittr)
+# another new package that allows us to write a sequence of 
+# functions to be applied as a pipeline (using the 'pipe' notation: %>%).
+# This makes the code more readable
+
 
 # Load the data, that is, the networks we created in Lab 1
 
@@ -306,7 +317,7 @@ plot(friendship_gc,
 summary(betweenness(krack_friendship))
 
 # Compute betweeness for all the networks and store them in a data frame
-krack_betweenness_df = data.frame(node_id=as.integer(V(krack_advice)$name),
+krack_betweenness_df <- data.frame(node_id=as.integer(V(krack_advice)$name),
                                   advice=betweenness(krack_advice),
                                   friendship=betweenness(krack_friendship),
                                   reports_to=betweenness(krack_reports_to))
@@ -402,7 +413,7 @@ plot(krack_friendship,
      vertex.label.cex=degree(krack_friendship, normalized = TRUE) * 2.5,
      edge.arrow.size=0.3,
      main="Friendship network",
-    sub="Node colour denotes eigenvector centrality,\n size reflects degree")
+     sub="Node colour denotes eigenvector centrality,\n size reflects degree")
 
 # Note that actors with the highest number of connections (that is, highest degree)
 # are not at the same time the most important according to Eigen vector centrality 
