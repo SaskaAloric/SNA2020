@@ -12,11 +12,13 @@
 # The objective of this lab is to introduce measures of 
 # connectivity and cohesion in a network, including:
 # - reachability, shortest path, diameter
-# - density, reciprocity, triadic census
+# - density, reciprocity 
+# - diadic and triadic census
 # - transitivity (clustering coef.)
-# - k-cores
+# - network core (k-cores)
 # It also covers basic measures of homophily (assortativity) 
-# and heterogenity.
+# and heterogenity, as indicators of group formation in a 
+# network - the topic we examine in Lab4 
 #
 ##############################################################
 
@@ -487,7 +489,7 @@ visNetwork(nodes = friend_undirect_nodes,
 
 
 #
-# 2.7 K-cores
+# 2.7 Network core: k-cores
 #
 
 # The k-core is the maximal subgraph in which every node has degree of at least k.
