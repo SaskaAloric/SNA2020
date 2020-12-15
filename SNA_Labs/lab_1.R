@@ -35,7 +35,7 @@
 
 
 # If you haven't used the *igraph* package before, you'll have  
-# to instal it first:
+# to install it first:
 # install.packages('igraph')
 
 # This and the following labs use the current version of igraph
@@ -58,11 +58,11 @@ library(igraph)
 # 1. LOADING NETWORK DATA
 ###
 
-# We will use David Krackhardt's High-tech Managers Networks dataset.
+# We will use David Krackhardt's High-tech Managers Networks data set.
 # The data were collected from 21 management personnel in a high-tech, 
 # machine manufacturing firm to assess the effects of a recent 
 # management intervention program.
-# The dataset and its description are available at: 
+# The data set and its description are available at: 
 # http://networkdata.ics.uci.edu/netdata/html/krackHighTech.html
 
 # We will load edge lists for 3 networks with the same actors (nodes),
@@ -97,14 +97,14 @@ reports_to_data_frame <- read.table('http://sna.stanford.edu/sna_R_labs/data/Kra
 # reports_to_data_frame <- read.table('data/Krack-High-Tec-edgelist-ReportsTo.txt')
 
 # Let's see what these data frames look like
-head(advice_data_frame, 10)
-head(friendship_data_frame, n=10)
-head(reports_to_data_frame, n=10)
+head(advice_data_frame, n=10)
+head(friendship_data_frame, 10)
+head(reports_to_data_frame, 10)
 
-# We can also examine the strucure of the data frame:
+# We can also examine the structure of the data frame:
 str(advice_data_frame)
 
-# For convenience, we can assign some more meaningful column names 
+# For convenience, we can assign more meaningful column names 
 # to our newly imported data frames:
 colnames(advice_data_frame) <- c('ego', 'alter', 'advice_tie')
 head(advice_data_frame)
@@ -125,7 +125,7 @@ sum(advice_data_frame$advice_tie == 0)
 sum(friendship_data_frame$friendship_tie == 0)
 sum(reports_to_data_frame$reports_to_tie == 0)
 
-# Reduce to non-zero edges so that the data frame contains only
+# Reduce to non-zero edges so that each data frame contains only
 # actual ties between actors
 advice_nonzero_edges <- subset(advice_data_frame, advice_tie > 0)
 friend_nonzero_edges <- subset(friendship_data_frame, friendship_tie > 0) 
@@ -140,13 +140,11 @@ reports_nonzero_edges <- reports_nonzero_edges[,-3]
 
 # The attribute data for this lab are in a comma-separated-value
 # (CSV) file. read.csv() loads a CSV file into a data frame object.
-# In this case, we set header=T, to tell R that the first 
-# row of data contains column names.
 # We can load csv file from a URL:
-attributes <- read.csv('http://sna.stanford.edu/sna_R_labs/data/Krack-High-Tec-Attributes.csv', header=T)
+attributes <- read.csv('http://sna.stanford.edu/sna_R_labs/data/Krack-High-Tec-Attributes.csv')
 
 # Or we can read from a local file:
-# attributes <- read.csv('data/Krack-High-Tec-Attributes.csv', header=T)
+# attributes <- read.csv('data/Krack-High-Tec-Attributes.csv')
 
 # Check the structure and content of the attributes data frame
 str(attributes)
@@ -156,7 +154,7 @@ str(attributes)
 # - tenure or length of service (in years), 
 # - level in the corporate hierarchy; this is coded as follows: 
 #   1=CEO, 2 = Vice President, 3 = manager), 
-# - department, which is coded 1,2,3,4 with the CEO in department 0 ie not in a department
+# - department, which is coded 1,2,3,4 with the CEO in department 0 (ie not in any department)
 
 summary(attributes)
 
@@ -174,7 +172,7 @@ summary(attributes)
 # follows:
 # data(kracknets, package = "NetData")
 # This is good to know as R packages often come with a number 
-# of datasets that can be used for practicing. 
+# of data sets that can be used for practicing. 
 
 
 ###
@@ -214,14 +212,18 @@ V(advice_net)$name <- 1:vcount(advice_net)
 V(advice_net)$name
 
 # Since we have node attributes, we can include them in the graph 
-# when creating the graph object.
-# To do that, we first need to add a column to the 'attributes' df 
-# to represent the nodes' 'names', (ie. values to be used for the 
-# node 'name' attribute in the graph). These names have to match 
-# the nodes' names in the edge list (ie. values of the 'ego' and
-# 'alter' columns in the advice_nonzero_edges df). Since in 
-# our case nodes' names are simply the nodes' ordinal numbers, the
-# new node_name column in the 'attributes' df will simply be:
+# when creating the graph object. This can be done by specifying 
+# the 'vertices' parameter of the graph_from_data_frame() f.
+?graph_from_data_frame 
+
+# To make our 'attributes' data frame consistent with the function's
+# requirements, we need to extend it with a column that represents
+# the nodes' 'names' (ie. values to be used for the node 'name' 
+# attribute in the graph). These names have to match the nodes' 
+# names in the edge list (ie. values of the 'ego' and 'alter' columns
+# in the advice_nonzero_edges data frame). Since in our case nodes' 
+# names are simply the nodes' ordinal numbers, the new node_name 
+# column in the 'attributes' data frame will simply be:
 attributes$node_name <- 1:nrow(attributes)
 
 # Next, we need to reorder the columns, since the column with the node
@@ -229,8 +231,6 @@ attributes$node_name <- 1:nrow(attributes)
 str(attributes)
 attributes <- attributes[,c(5,1:4)]
 # Now, create the graph. 
-# Check the documentation of the graph_from_data_frame() f. to better
-# understand the 'vertices' parameter. 
 advice_net <- graph_from_data_frame(d = advice_nonzero_edges, 
                                        vertices = attributes) 
 summary(advice_net)
@@ -258,7 +258,7 @@ V(advice_net)[V(advice_net)$AGE > 40]
 advice_over40 <- induced_subgraph(advice_net, 
                                   V(advice_net)[V(advice_net)$AGE > 40])
 summary(advice_over40)
-
+summary(V(advice_over40)$AGE)
 
 # We can also get attribute values for a subset of nodes.
 # For example, to get the tenure of only those who are 
@@ -276,7 +276,7 @@ V(advice_net)$AGE[V(advice_net)$DEPT == 2]
 # 3. CREATING MORE GRAPHS
 ###
 
-# Now, we'll create networks for the other two tie type
+# Now, we'll create networks for the other two tie types
 
 # friendship network
 friendship_net <- graph_from_data_frame(friend_nonzero_edges,
@@ -324,6 +324,7 @@ summary(friend_undirect)
 # the code between the pdf() / jpeg() function and dev.off().
 
 # assure that you are in the "SNA_Labs" subdirectory
+getwd()
 setwd('SNA_Labs')
  
 # First, let's look at the advice network
@@ -356,23 +357,19 @@ dev.off()
 # algorithm to the specific set of ties we care about. 
 # The above graphs were plotted using the Fruchterman-Rheingold
 # algorithm (the default one). Other options are described in 
-# the igraph help page for "layout_" which can be accessed by 
-# entering ?layout_
+# the igraph help page for "layout_" :
 ?layout_
 
 # Now we'll use the layout generated for the Reports-to network
 # to plot the friendship ties. The idea is to try to (visually) 
 # explore how well friendship relations go along the official 
 # organisational structure (reflected in the reports_to relation).
-
 reports_to_layout <- layout_nicely(reports_to_net)
-jpeg("graphs/1.4_Krackhardt_Friendship_with_reports_layout.jpg")
 plot(friendship_net, 
      layout=reports_to_layout,
      edge.arrow.size=.3,
      main="High-tech Managers Friendship Network")
-dev.off()
- 
+
 
 # Now let's color-code vertices by department 
 # Check the possible values for the 'DEPT' attribute
@@ -384,28 +381,25 @@ colors <- c('#8dd3c7','#ffffb3','#bebada','#fb8072','#80b1d3')
 # Associate department numbers with colors from the 'colors' palette
 dept_vertex_colors <- sapply(dept_vertex_colors, function(x) colors[x])
 
-jpeg("graphs/1.5_Krackhardt_Friendship_Color.jpg") 
 plot(friendship_net, 
     layout=reports_to_layout, 
     vertex.color=dept_vertex_colors, # setting node color
     vertex.label=V(friendship_net)$LEVEL, # using organisational level as the vertex label
     edge.arrow.size=.3,
     main="Friendship network\n(node color denotes department)")
-dev.off() 
 
 
 # Now let's make the vertex size proportional to the actors' tenure:
-tenure_vertex_sizes = V(friendship_net)$TENURE
+tenure_vertex_sizes <- V(friendship_net)$TENURE
 summary(tenure_vertex_sizes)
 # There is a large difference between the min and max values, which will not  
 # 'translate' well into visual depiction of the graph. So, we will somewhat
 # 'smooth' the difference
 # Some ideas how this "smoothing" can be done, are given in this post:
 # https://towardsdatascience.com/transforming-skewed-data-73da4c2d0d16
-tenure_vertex_sizes <- log(tenure_vertex_sizes + 1) * 4
+tenure_vertex_sizes <- log(tenure_vertex_sizes + 1) * 8
 summary(tenure_vertex_sizes)
 
-jpeg("graphs/1.6_Krackhardt_Friendship_Vertex_Size.jpg") 
 plot(friendship_net, 
      layout=reports_to_layout, 
      vertex.color=dept_vertex_colors, 
@@ -413,17 +407,16 @@ plot(friendship_net,
      edge.arrow.size=.3,
      vertex.size=tenure_vertex_sizes, # setting the vertex size
      main="Friendship network\n(node color denotes department, size denotes tenure)")
-dev.off() 
 
 
 # We can also add visualization related attributes directly to a graph, 
-# that is to the vertices and edges of the graph. Since such attributes
-# serve only for visualizing a graph, we will first replicate the graph, 
-# and add the visualisation attributes to the replicated one, thus avoiding
-# to 'burden' the 'main' graph with visual details.
+# that is, as attributes of the graph's vertices and edges. 
+# Since such attributes serve only for visualizing a graph, we will first 
+# replicate the graph, and add the visualisation attributes to the replicated one,
+# thus avoiding to 'burden' the 'main' graph with visual details.
 friendship_viz <- friendship_net
 E(friendship_viz)$arrow.size <- .3 
-E(friendship_viz)$color <- '#7c7cd6' # violet as the color of the edges
+E(friendship_viz)$color <- '#4496eb' # (a variant of) blue as the edge color
 V(friendship_viz)$size <- tenure_vertex_sizes
 V(friendship_viz)$color <- dept_vertex_colors 
 V(friendship_viz)$frame <- '#3e3e8c' # dark blue as the color of the edge/frame of all vertices
@@ -431,11 +424,8 @@ V(friendship_viz)$frame <- '#3e3e8c' # dark blue as the color of the edge/frame 
 # Since we have added the visualization related attributes
 # to the graph object directly, we can visualize it without
 # specifying any parameters to the plot() function
-jpeg("graphs/1.7_Krackhardt_Friendship_2.jpg")
-plot(friendship_viz, 
-     layout=reports_to_layout)
-dev.off() 
- 
+plot(friendship_viz, layout=reports_to_layout)
+
 
 #############
 # Task 1
@@ -443,7 +433,7 @@ dev.off()
 
 # Use network visualisations to explore the similarities and differences of 
 # the advice and reports-to networks. To do that, follow a procedure similar to  
-# the one used above for comparing / contrasting friendship and reports-to netwoks. 
+# the one used above for comparing / contrasting friendship and reports-to networks. 
 
 
  
