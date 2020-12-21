@@ -33,10 +33,10 @@ library(ggplot2)
 library(viridis)
 # Note: a package providing access to professionally created
 # colour palettes: https://github.com/sjmgarnier/viridis
-# install.packages('tidyr')
 
+# install.packages('tidyr')
 library(tidyr)
-# Note: tidyr is a new package; we will need it for some tasks 
+# Note: we will need tidyr for some tasks 
 # associated with manipulating data frames
 
 # install.packages('magrittr')
@@ -48,12 +48,10 @@ library(magrittr)
 
 # Load the data, that is, the networks we created in Lab 1
 
+# Set the data directory with respect to the current 
+# working directory
 getwd()
-# If current working directory is not the 'SNA_Labs' folder, 
-# set it to SNA_Labs
-setwd("SNA_Labs")
-
-data_dir = "output/lab1/"
+data_dir = "SNA_Labs/output/lab1/"
 paste0(data_dir, "krack_advice.RData")
 
 krack_advice <- readRDS(paste0(data_dir, "krack_advice.RData"))
@@ -74,7 +72,7 @@ summary(krack_reports_to)
 # 2.1 Degree centrality
 #
 
-# Compute indegree and outdegree for each node, 
+# Compute in-degree and out-degree for each node, 
 # first in the advice network
 ?degree
 advice_deg_in <- degree(krack_advice, mode="in") 
@@ -106,7 +104,7 @@ deg_advice_df_long <- pivot_longer(data = deg_advice_df,
 head(deg_advice_df_long)
 tail(deg_advice_df_long)
 
-# Finally, create a barplot plot 
+# Finally, create a bar plot to visualise actors' degree values 
 ggplot(data = deg_advice_df_long, 
        mapping = aes(x=node_id, y=degree_value, fill=degree_type)) +
   geom_col(position = 'dodge') +
@@ -117,7 +115,8 @@ ggplot(data = deg_advice_df_long,
   scale_x_continuous(breaks = seq(0,21,1)) +
   theme_minimal()
 
-# We can also make a plot (histogram) to examine degree distribution
+
+# To examine degree distribution, we'll use a histogram
 max_degree <- max(deg_advice_df_long$degree_value)
 
 ggplot(data = deg_advice_df_long, 
@@ -132,7 +131,7 @@ ggplot(data = deg_advice_df_long,
   theme_minimal()
 
 
-# Another way to visualise and interpet the computed metrics is to plot a
+# Another way to visualise and interpret the computed metrics is to plot a
 # network as a graph and scale nodes' size and color based on the computed
 # in- and out-degree values. 
 # So, let's plot the advice network as a graph with in-degree determining the 
@@ -140,25 +139,25 @@ ggplot(data = deg_advice_df_long,
 
 # To create a color palette based on the computed in-degree values, we will use 
 # the attr_based_color_gradient() function from the SNA_custom_functions R script
-source('SNA_custom_functions.R')
+source('SNA_Labs/SNA_custom_functions.R')
 # The function creates a gradient color vector with as many color gradients as 
 # there are different values in the given attribute 
-viridis_pal_ends = c('#FDE725FF', '#440154FF')
-in_degree_colors = attr_based_color_gradient(g_attr = deg_advice_df$in_degree, 
+viridis_pal_ends = c('#F0F921FF', '#8305A7FF')
+in_degree_colors = attr_based_color_gradient(g_attr = deg_advice_df$in_degree,
                                              pal_end_points = viridis_pal_ends)
 in_degree_colors
 # Note: 
-# to select colors using the viridis and similar colour blind safe pallets, consult this post:
+# to select colors using the viridis and similar colour blind safe pallets, 
+# consult this post:
 # https://www.thinkingondata.com/something-about-viridis-library/
 # or use this R Colors cheatsheet:
-# https://www.nceas.ucsb.edu/~frazier/RSpatialGuides/colorPaletteCheatsheet.pdf
+# https://www.nceas.ucsb.edu/~frazier/RSpatialGuides/colorPaletteCheatsheet.pdf 
 
 # Now, we can make a graph plot as we did in Lab 1
 plot(krack_advice, 
      layout=layout_with_kk(krack_advice), 
      vertex.color = in_degree_colors, 
      vertex.size = deg_advice_df$out_degree * 1.5,
-     # vertex.label = V(krack_advice)$LEVEL,
      vertex.label.cex	= deg_advice_df$out_degree * 0.15,
      edge.arrow.size = 0.3,
      main="Advice network",
@@ -168,7 +167,7 @@ plot(krack_advice,
 #########
 # TASK 1:
 #
-# Compute indegree and outdegree for the nodes in the other two networks 
+# Compute in-degree and out-degree for the nodes in the other two networks 
 # (friendship and reports-to) and visualise the computed values (as done above).
 # Also, create visualizations for the degree distribution for those two networks. 
 # Compare the degree distribution of the three networks: advice, friendship and 
@@ -184,19 +183,19 @@ plot(krack_advice,
 # We'll start with an undirected network, as it is somewhat easier to deal with
 # when it comes to the closeness centrality.
 # Let's consider the friendship network and transform it into an undirected network.
-# But before doing so, we'll add weight attribute (equal to 1) to each edge, so that
+# But before doing so, we'll add strength attribute (equal to 1) to each edge, so that
 # after the transformation into undirected network we can differentiate between 
-# reciprocal ties (their weight will be 2) and unidirected ties (weight will remain 1)
-E(krack_friendship)$weight = 1
+# reciprocal ties (their strength will be 2) and one-way ties (strength will remain 1)
+E(krack_friendship)$strength <- 1
 summary(krack_friendship)
 krack_friendship_undirect <- as.undirected(krack_friendship, 
                                            mode = "collapse",
-                                           edge.attr.comb = list(weight='sum'))
+                                           edge.attr.comb = list(strength='sum'))
 # Note that we are summing edge weights - see the documentation for attribute combination
 # for more options
 
 summary(krack_friendship_undirect)
-table(E(krack_friendship_undirect)$weight)
+table(E(krack_friendship_undirect)$strength)
 
 # Before computing closeness, let's check if the network is connected.
 # A network is connected if there is a path between any pair of nodes
@@ -216,11 +215,11 @@ summary(closeness_friend_undirect)
 # We can also include edge attributes (weights) in the calculation of closeness.
 # It is important to note that edge "weights are used for calculating weighted 
 # shortest paths, so they are interpreted as distances".
-# In our case higher weights mean closer relations, that is, lower distance. 
-# So, to appropriately calculate weighted closeness, it is 
-# better to take reciprocal value of the weight attribute:
+# In our case higher edge weights mean stronger relations, that is, lower distance. 
+# So, to appropriately calculate weighted closeness, we should to take 
+# reciprocal value of the 'strength' attribute:
 cl_weighted_friend_undirect <- closeness(krack_friendship_undirect, 
-                                         weights = 1/E(krack_friendship_undirect)$weight)
+                                         weights = 1/E(krack_friendship_undirect)$strength)
 summary(cl_weighted_friend_undirect)
 
 # To better appreciate the computed metrics, let's visualise them.
@@ -257,8 +256,9 @@ plot(krack_friendship_undirect,
 # edge direction, whereas the 'strong' mode does consider the direction of
 # edges 
 is.connected(krack_friendship, mode='strong')
-# not connected -> cannot compute closeness; so, we need to find the 
-# giant component (= the largest connected component in the graph)
+# not connected -> cannot compute true closeness values
+# We will find the giant component (= the largest connected component in the graph)
+# and compute closeness on this (sub)graph 
 fr_components <- components(krack_friendship, mode = 'strong')
 str(fr_components)
 fr_components$membership
@@ -267,7 +267,7 @@ plot(krack_friendship,
      layout=layout_nicely(krack_friendship), 
      vertex.color = fr_components$membership,
      edge.arrow.size = 0.3,
-     palette=viridis(3, direction = -1))
+     palette=viridis(n=3, direction = -1))
 
 # two nodes outside the giant component; get ids of those nodes
 not_in_gc <- which(fr_components$membership != 1)
@@ -284,24 +284,25 @@ str(friendship_closeness)
 
 # Let's visualise these measures using node and label size to represent in-closeness,
 # and node color to represent out-closeness
-out_closeness_colors = attr_based_color_gradient(friendship_closeness$out_cl, viridis_pal_ends)
+out_closeness_colors = attr_based_color_gradient(friendship_closeness$out_cl, 
+                                                 viridis_pal_ends)
 plot(friendship_gc, 
      layout=layout_nicely(friendship_gc), 
      vertex.color=out_closeness_colors, 
      vertex.size=friendship_closeness$in_cl*700, # in-closeness is multiplied by 700 since in-closeness values are very small 
      vertex.label.cex=friendship_closeness$in_cl*50, 
-     edge.arrow.size=.20,
+     edge.arrow.size=.30,
      main="Giant component of the Friendship network",
      sub="Node color denotes out-closeness (lighter colour, smaller values),\n size denotes in-closeness")
 
-# It seems that those with high in-closeness have low out-closeness and vice versa;
+# It seems that those with high in-closeness have low to moderate out-closeness and vice versa;
 # We will check that later by computing correlations of centrality measures.
 
 #########
 # TASK 2:  
 # 
 # Do the same kinds of computations and visualizations for the advice network
-# and compare it to the results obtained for the friendship network. 
+# and compare them to the results obtained for the friendship network. 
 # Note down your observations.
 #
 #########
@@ -312,11 +313,11 @@ plot(friendship_gc,
 #
 
 # Betweenness centrality measures the number of shortest paths 
-# beetween node pairs that go through a specific vertex.
+# between node pairs that go through a specific vertex.
 ?betweenness
 summary(betweenness(krack_friendship))
 
-# Compute betweeness for all the networks and store them in a data frame
+# Compute betweenness for all the networks and store them in a data frame
 krack_betweenness_df <- data.frame(node_id=as.integer(V(krack_advice)$name),
                                   advice=betweenness(krack_advice),
                                   friendship=betweenness(krack_friendship),
@@ -331,7 +332,7 @@ which(krack_betweenness_df$advice == max(krack_betweenness_df$advice))
 apply(krack_betweenness_df[,-1], 2, function(x) which(x==max(x)))
 # Interestingly, no overlap across the networks
 
-# Let's visualise betwenees across the networks
+# Let's visualise betwennees across the networks
 # First, transform the df from wide to long format
 krack_betweenness_long <- pivot_longer(data = krack_betweenness_df,
                                        cols = 2:4,
@@ -347,7 +348,7 @@ ggplot(data = krack_betweenness_long,
   labs(x = "Node ID", y = "Betweenness") +
   scale_fill_discrete(name = "Tie type") +
   scale_x_continuous(breaks = 1:21) +
-  theme_bw() + 
+  theme_minimal() + 
   coord_flip()
 
 # We can also examine the distribution of betwenness values across the 3 networks
@@ -397,7 +398,7 @@ summary(eigen_friend)
 # We will compute this measure on undirected friendship network since
 # it is a weighted network (the directed one does not have weights).
 w_eigen_friend <- eigen_centrality(krack_friendship_undirect, 
-                                    weights = E(krack_friendship_undirect)$weight)
+                                    weights = E(krack_friendship_undirect)$strength)
 w_eigen_friend <- w_eigen_friend$vector
 summary(w_eigen_friend)
 
@@ -460,13 +461,13 @@ View(friendship_centrality_all)
 
 # Sort by betwenness
 View(friendship_centrality_all[order(friendship_centrality_all$betweenness, decreasing = TRUE),])
-# altrnative way (requires dplyr package):
+# alternative way (requires dplyr package):
 friendship_centrality_all %>% arrange(desc(betweenness)) %>% View()
 # Note that betweenness seems to be correlated with out-degree and out-closeness
 
-# Sort by eigen
+# Sort by eigenvector centrality
 View(friendship_centrality_all[order(friendship_centrality_all$eigen, decreasing = TRUE),])
-# altrnative way:
+# alternative way:
 friendship_centrality_all %>% arrange(desc(eigen)) %>% View()
 # Note that Eigenvector c. seems to be correlated with in-degree and in-closeness
 

@@ -353,7 +353,7 @@ plot(reports_to_net,
      main="High-tech Managers Reports-to Network")
 dev.off()
  
-# We can optimize the layout by applying a layout 
+# We can optimize the layout of nodes by applying a layout 
 # algorithm to the specific set of ties we care about. 
 # The above graphs were plotted using the Fruchterman-Rheingold
 # algorithm (the default one). Other options are described in 
@@ -367,7 +367,7 @@ dev.off()
 reports_to_layout <- layout_nicely(reports_to_net)
 plot(friendship_net, 
      layout=reports_to_layout,
-     edge.arrow.size=.3,
+     edge.arrow.size=.4,
      main="High-tech Managers Friendship Network")
 
 
@@ -376,7 +376,8 @@ plot(friendship_net,
 unique(V(friendship_net)$DEPT)
 # Initiate the vector of node colors:
 dept_vertex_colors <- V(friendship_net)$DEPT + 1
-# Select a color palette using the ColorBrewer (http://colorbrewer2.org) 
+# Select a color palette (for qualitative data) using the 
+# ColorBrewer (http://colorbrewer2.org) 
 colors <- c('#8dd3c7','#ffffb3','#bebada','#fb8072','#80b1d3')
 # Associate department numbers with colors from the 'colors' palette
 dept_vertex_colors <- sapply(dept_vertex_colors, function(x) colors[x])
@@ -385,7 +386,7 @@ plot(friendship_net,
     layout=reports_to_layout, 
     vertex.color=dept_vertex_colors, # setting node color
     vertex.label=V(friendship_net)$LEVEL, # using organisational level as the vertex label
-    edge.arrow.size=.3,
+    edge.arrow.size=.4,
     main="Friendship network\n(node color denotes department)")
 
 
@@ -397,7 +398,7 @@ summary(tenure_vertex_sizes)
 # 'smooth' the difference
 # Some ideas how this "smoothing" can be done, are given in this post:
 # https://towardsdatascience.com/transforming-skewed-data-73da4c2d0d16
-tenure_vertex_sizes <- log(tenure_vertex_sizes + 1) * 8
+tenure_vertex_sizes <- log(tenure_vertex_sizes + 1) * 7
 summary(tenure_vertex_sizes)
 
 plot(friendship_net, 
@@ -416,10 +417,10 @@ plot(friendship_net,
 # thus avoiding to 'burden' the 'main' graph with visual details.
 friendship_viz <- friendship_net
 E(friendship_viz)$arrow.size <- .3 
-E(friendship_viz)$color <- '#4496eb' # (a variant of) blue as the edge color
+E(friendship_viz)$color <- '#386cb0' # (a variant of) dark blue as the edge color
 V(friendship_viz)$size <- tenure_vertex_sizes
 V(friendship_viz)$color <- dept_vertex_colors 
-V(friendship_viz)$frame <- '#3e3e8c' # dark blue as the color of the edge/frame of all vertices
+V(friendship_viz)$frame.color <- '#386cb0' # color of the edge/frame of all vertices
 
 # Since we have added the visualization related attributes
 # to the graph object directly, we can visualize it without

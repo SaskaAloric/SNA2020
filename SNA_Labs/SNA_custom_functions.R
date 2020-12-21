@@ -25,6 +25,14 @@ attr_based_color_gradient <- function(g_attr, pal_end_points) {
   return(g_colors)
 }
 
+# A variant of the above function, using color palettes from the 'viridis' package
+attr_based_viridis_palette <- function(values, pal_option='D') {
+  require(viridis)
+  values <- sort(values)
+  n_cols <- length(unique(values))
+  return(viridis(n=n_cols, option = pal_option))
+}
+
 
 # The function computes homophily as the proportion of all edges in a network 
 # which bridge two actors with matching characteristics on some attribute. 
