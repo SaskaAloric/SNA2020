@@ -52,7 +52,6 @@ library(magrittr)
 # working directory
 getwd()
 data_dir = "SNA_Labs/output/lab1/"
-paste0(data_dir, "krack_advice.RData")
 
 krack_advice <- readRDS(paste0(data_dir, "krack_advice.RData"))
 summary(krack_advice)
@@ -79,6 +78,11 @@ advice_deg_in <- degree(krack_advice, mode="in")
 advice_deg_in
 table(advice_deg_in)
 
+# Note: 
+# whenever you want to compare a metric across networks (of different sizes),
+# that metric should be normalised (by setting normalized = TRUE), to account
+# for the difference in the network sizes.
+
 advice_deg_out <- degree(krack_advice, mode="out") 
 advice_deg_out
 table(advice_deg_out)
@@ -87,7 +91,7 @@ table(advice_deg_out)
 
 # First, create a data frame that integrates the computed 
 # in and out degree measures for all the nodes
-deg_advice_df <- data.frame(node_id=as.integer(V(krack_advice)$name), 
+deg_advice_df <- data.frame(node_id=V(krack_advice)$name, 
                             in_degree=advice_deg_in,
                             out_degree=advice_deg_out)
 head(deg_advice_df)
@@ -107,7 +111,7 @@ tail(deg_advice_df_long)
 # Finally, create a bar plot to visualise actors' degree values 
 ggplot(data = deg_advice_df_long, 
        mapping = aes(x=node_id, y=degree_value, fill=degree_type)) +
-  geom_col(position = 'dodge') +
+  geom_col(position = position_dodge()) +
   labs(x = "Node ID", y = "In- and Out-Degrees") +
   scale_fill_viridis(name = "Degree type",
                      labels = c("In-degree", "Out-degree"),
@@ -118,15 +122,18 @@ ggplot(data = deg_advice_df_long,
 
 # To examine degree distribution, we'll use a histogram
 max_degree <- max(deg_advice_df_long$degree_value)
+min_degree <- min(deg_advice_df_long$degree_value)
 
 ggplot(data = deg_advice_df_long, 
        mapping = aes(x = degree_value, fill = degree_type)) +
-  geom_histogram(bins = 10, position = 'identity', alpha=0.85) +
+  geom_histogram(binwidth = 2, 
+                 position = position_identity(), 
+                 alpha=0.75) +
   labs(x = "Degree value", title = "Degree distribution for the Advice network") +
   scale_fill_viridis(name = "Degree type",
                      labels = c("In-degree", "Out-degree"),
                      discrete = TRUE) +
-  scale_x_continuous(breaks = seq(0,max_degree,1)) +
+  scale_x_continuous(breaks = seq(min_degree,max_degree,2)) +
   scale_y_continuous(breaks = seq(0,6)) +
   theme_minimal()
 
@@ -206,12 +213,6 @@ is_connected(krack_friendship_undirect)
 closeness_friend_undirect <- closeness(krack_friendship_undirect)
 summary(closeness_friend_undirect)
 
-# Note: 
-# whenever you want to compare a metric across networks (of different sizes),
-# that metric should be normalised (by setting normalized = TRUE), to account
-# for the difference in the network sizes.
-
-
 # We can also include edge attributes (weights) in the calculation of closeness.
 # It is important to note that edge "weights are used for calculating weighted 
 # shortest paths, so they are interpreted as distances".
@@ -277,7 +278,7 @@ summary(friendship_gc)
 is.connected(friendship_gc, mode='strong')
 # Now that we have a connected friendship (sub)graph, we can compute in- and
 # out-closeness
-friendship_closeness = data.frame(node_id=as.integer(V(friendship_gc)$name),
+friendship_closeness = data.frame(node_id=V(friendship_gc)$name,
                                   in_cl=closeness(friendship_gc, mode = 'in'),
                                   out_cl=closeness(friendship_gc, mode = 'out'))
 str(friendship_closeness)
@@ -316,9 +317,10 @@ plot(friendship_gc,
 # between node pairs that go through a specific vertex.
 ?betweenness
 summary(betweenness(krack_friendship))
+quantile(betweenness(krack_friendship), probs = seq(0.9,1,0.025))
 
 # Compute betweenness for all the networks and store them in a data frame
-krack_betweenness_df <- data.frame(node_id=as.integer(V(krack_advice)$name),
+krack_betweenness_df <- data.frame(node_id=V(krack_advice)$name,
                                   advice=betweenness(krack_advice),
                                   friendship=betweenness(krack_friendship),
                                   reports_to=betweenness(krack_reports_to))
@@ -333,7 +335,8 @@ apply(krack_betweenness_df[,-1], 2, function(x) which(x==max(x)))
 # Interestingly, no overlap across the networks
 
 # Let's visualise betwennees across the networks
-# First, transform the df from wide to long format
+# 
+# First, transform the data frame from wide to long format
 krack_betweenness_long <- pivot_longer(data = krack_betweenness_df,
                                        cols = 2:4,
                                        names_to = "tie_type",
@@ -344,20 +347,21 @@ head(krack_betweenness_long)
 # of the 3 networks
 ggplot(data = krack_betweenness_long,
        mapping = aes(x = node_id, y = betweenness, fill = tie_type)) +
-  geom_col(position = 'dodge') +
+  geom_col(position = position_dodge()) +
   labs(x = "Node ID", y = "Betweenness") +
-  scale_fill_discrete(name = "Tie type") +
+  scale_fill_viridis(name = "Tie type", discrete = TRUE) +
   scale_x_continuous(breaks = 1:21) +
   theme_minimal() + 
   coord_flip()
 
-# We can also examine the distribution of betwenness values across the 3 networks
+# We can also examine the distribution of betweenness values across the 3 networks
 ggplot(data = krack_betweenness_long,
-       mapping = aes(x = tie_type, y = betweenness, fill = tie_type)) +
-  geom_boxplot() +
-  geom_jitter(color="black", size=0.65, alpha=0.9) +
-  scale_fill_viridis(name="Tie type", discrete = TRUE, alpha=0.75) +
-  labs(x = "\nNetwork", y = "Betweenness") +
+       mapping = aes(x = betweenness, fill = tie_type)) +
+  #    mapping = aes(x = log(betweenness + 1), fill = tie_type)) + # log based scalling for more meaningful visualisation 
+  # geom_histogram(position = position_identity(), binwidth = 10) +
+  geom_density() + # density function offers a better insight (compared to histogram) into the distribution
+  scale_fill_viridis(name="Tie type", discrete = TRUE, alpha=0.55) +
+  labs(x = "Betweenness", title = "Distribution of betweenness centrality across the 3 networks") +
   theme_minimal()
 
 
@@ -365,7 +369,7 @@ ggplot(data = krack_betweenness_long,
 # TASK 3:  
 # 
 # Visualize the three networks (advice, friendship, and reports-to) by
-# ploting them as graphs where the node color represents betweenness 
+# plotting them as graphs where the node color represents betweenness 
 # whereas the node size represents in-degree (try also in-closeness). 
 #
 #########
@@ -392,11 +396,11 @@ eigen_friend <- eigen_friend$vector
 summary(eigen_friend)
 
 # We can also compute weighted Eigenvector centrality.
+# We will compute this measure on undirected friendship network since
+# it is a weighted network (the directed one does not have weights).
 # Note that in this case, weights are interpreted as the reflection of the 
 # connection strength: "higher weights spread the centrality better"
 # This is fully suitable for the friendship network.
-# We will compute this measure on undirected friendship network since
-# it is a weighted network (the directed one does not have weights).
 w_eigen_friend <- eigen_centrality(krack_friendship_undirect, 
                                     weights = E(krack_friendship_undirect)$strength)
 w_eigen_friend <- w_eigen_friend$vector
@@ -408,10 +412,10 @@ summary(w_eigen_friend)
 eigen_col = attr_based_color_gradient(eigen_friend, viridis_pal_ends)
 
 plot(krack_friendship, 
-     layout=layout_nicely(krack_friendship), 
+     layout=layout_with_kk(krack_friendship), 
      vertex.color=eigen_col, 
-     vertex.size=degree(krack_friendship, normalized = TRUE) * 25,
-     vertex.label.cex=degree(krack_friendship, normalized = TRUE) * 2.5,
+     vertex.size=degree(krack_friendship) * 1.5,
+     vertex.label.cex=degree(krack_friendship) * 0.115,
      edge.arrow.size=0.3,
      main="Friendship network",
      sub="Node colour denotes eigenvector centrality,\n size reflects degree")
@@ -439,7 +443,7 @@ plot(krack_friendship,
 # examined centrality measures on one network.
 # To that end, we'll first construct a data frame with the vertices as rows 
 # and the centrality scores as columns:
-friendship_centrality_all <- data.frame(node_id=as.integer(V(krack_friendship)$name),
+friendship_centrality_all <- data.frame(node_id=V(krack_friendship)$name,
                                         in_degree=degree(krack_friendship, mode = 'in'),
                                         out_degree=degree(krack_friendship, mode = 'out'),
                                         betweenness=krack_betweenness_df$friendship,
