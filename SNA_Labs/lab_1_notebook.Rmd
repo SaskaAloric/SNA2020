@@ -422,17 +422,23 @@ Use network visualisations to explore the similarities and differences of the ad
 
 ### 5. EXPORT THE NETWORK
 
+```{r}
+output_dir <- "output/lab1/"
+if(file.exists(output_dir)==FALSE) 
+    dir.create(file.path(getwd(), output_dir), recursive = TRUE)
+```
+
 The **write.graph()** function exports a graph object in various formats readable by other programs. For example, a graph can be exported in the 'graphml' format and imported in Gephi for visualisation.
 ```{r}
-write.graph(advice_net, file='output/lab1/krack_advice_net.graphml', format="graphml")
+write.graph(advice_net, file=paste0(output_dir, 'krack_advice_net.graphml'), format="graphml")
 ``` 
 For a more general file type (e.g., importable to Excel), use the "edgelist" format. Note that this file format will keep neither node nor tie attributes; only the edges will be stored.
 ```{r}
-write.graph(advice_net, file='output/lab1/krack_advice.txt', format="edgelist")
+write.graph(advice_net, file=paste0(output_dir, 'krack_advice.txt'), format="edgelist")
 ```
 We can also save graphs as RData files. This is the best option if we intend to further process graphs in R, since this format will keep all the specific characteristics of the graph objects that we have created.
 ```{r}
-saveRDS(advice_net, "output/lab1/krack_advice.RData")
-saveRDS(friendship_net, "output/lab1/krack_friendship.RData")
-saveRDS(reports_to_net, "output/lab1/krack_reports_to.RData")
+saveRDS(advice_net, paste0(output_dir, "krack_advice.RData"))
+saveRDS(friendship_net, paste0(output_dir, "krack_friendship.RData"))
+saveRDS(reports_to_net, paste0(output_dir, "krack_reports_to.RData"))
 ```
