@@ -17,7 +17,7 @@
 # - transitivity (clustering coef.)
 # - network core (k-cores)
 # It also covers basic measures of homophily (assortativity) 
-# and heterogenity, as indicators of group formation in a 
+# and heterogeneity, as indicators of group formation in a 
 # network - the topic we examine in Lab4 
 #
 ##############################################################
@@ -454,18 +454,26 @@ triad_prop_df
 #          https://www.researchgate.net/profile/Ruggero_G_Bettinardi/publication/317033037/figure/fig51/AS:496043125952517@1495277305701/Figure-C4-Local-clustering-coefficient-Schematic-representation-of-how-to-compute-the_W640.jpg)
 
 ?transitivity
-# Note: the transitivity function treats the input graph as undirected.
+# Important: the transitivity function treats a directed graph as undirected.
+# In fact, it (internally) transforms a directed graph into undirected using the
+# mode "each" of the as.undirected() function. This often results in transitivity
+# values different than expected. Hense, when working with a directed graph, it is
+# better to first transform it into undirected using the mode that you find the most
+# suitable, and then call the transitivity() function with the undirected graph. 
 
-lapply(krack_list, transitivity, type = 'global')
+# So, we will transform our directed graphs into their undirected counterparts before
+# passing them to the transitivity function
+
+lapply(krack_list, 
+       function(g) as.undirected(g, mode = 'collapse') %>% transitivity(type = 'global'))
 # clearly, the highest (global) clustering is in the advice network
 
 # We can also examine clustering at the local level:
-friend_trans <- transitivity(krack_friendship, type = 'local')
+friend_trans <- as.undirected(krack_friendship, mode = 'collapse') %>% 
+  transitivity(type = 'local')
 friend_trans <- data.frame(node_id = 1:21,
                            trans= friend_trans)
 friend_trans %>% arrange(desc(trans)) %>% View()
-# when examining these results consider that the friendship network 
-# is treated as an undirected network
 
 # Let's visualise the undirected friendship network to better understand
 # the obtained results. We'll use visNetwork as it allows for interaction
@@ -484,7 +492,8 @@ friend_undirect_nodes$label <- friend_undirect_nodes$id
 visNetwork(nodes = friend_undirect_nodes, 
            edges = friend_undirect_edges, 
            main="Undirected friendship network") %>% 
-  visOptions(highlightNearest = TRUE)
+  visOptions(highlightNearest = TRUE) %>%
+  visPhysics(enabled = FALSE)
 
 
 
@@ -511,7 +520,7 @@ table(friend_core_out)
 
 # We will need as many colors in the palette as there are different 
 # coreness values
-n_colors <- length(unique(friend_core_in))
+n_colors <- n_distinct(friend_core_in)
 core_colors <- viridis(n_colors)
 
 # Now, use the created palette to color nodes based on their in-coreness, 
@@ -635,7 +644,7 @@ summary(reports_to_iqvs)
 # obtained IQV values with the department-colored plots 
 
 # First, choose a qualitative palette so that we have one color for each department 
-n_dept <- length(unique(V(krack_advice)$DEPT))
+n_dept <- n_distinct(V(krack_advice)$DEPT)
 dept_colors <- viridis(n_dept)
 
 # Then, use the palette to create plots
