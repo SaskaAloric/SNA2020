@@ -63,7 +63,7 @@ tweets <- search_tweets(q = "#inaugurationday", type = 'recent',
 setwd("SNA_Labs")
 saveRDS(tweets, 'data/inaugurationday_20-01-2021.RData')
 # load the saved data (for offline work)
-# tweets <- readRDS("data/trump_tapes_tweets_04-01-2021.RData")
+# tweets <- readRDS("data/inaugurationday_20-01-2021.RData")
 
 # Get a glimpse into the obtained dataset
 glimpse(tweets)
