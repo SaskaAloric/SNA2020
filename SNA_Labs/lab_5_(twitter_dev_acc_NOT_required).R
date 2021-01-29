@@ -51,7 +51,7 @@ library(igraph)
 ###
 
 ?search_tweets
-tweets <- search_tweets(q = "#inaugurationday", type = 'recent',
+tweets <- search_tweets(q = "#ParisClimateAgreement", type = 'recent',
                         lang="en", n = 15000, include_rts = FALSE)
 
 # Note: to more easily create complex queries, that is queries enabled by 
@@ -61,12 +61,16 @@ tweets <- search_tweets(q = "#inaugurationday", type = 'recent',
 
 # (optionally) save the results
 setwd("SNA_Labs")
-saveRDS(tweets, 'data/inaugurationday_20-01-2021.RData')
+saveRDS(tweets, 'data/ParisClimateAgreement_28-01-2021.RData')
 # load the saved data (for offline work)
-# tweets <- readRDS("data/inaugurationday_20-01-2021.RData")
+# tweets <- readRDS("data/ParisClimateAgreement_28-01-2021.RData")
 
 # Get a glimpse into the obtained dataset
 glimpse(tweets)
+
+# For a detailed description of all the variables in the result set,
+# see Twitter documentation for the Tweet object:
+# https://developer.twitter.com/en/docs/twitter-api/v1/data-dictionary/object-model/tweet 
 
 # We will create "mention networks", that is networks with Twitter
 # users as nodes and connections (edges) established based on one
@@ -214,7 +218,8 @@ glimpse(senders_data)
 # available in the collected tweets data, but have to be obtained separately.
 
 # First, identify the alters (users) for whom the data are not available
-no_data_alters <- setdiff(union(mention_unique, reply_to_unique), all_senders)
+no_data_alters <- setdiff(union(mentioned_edgelist_reduced$mentioned, 
+                                replied_to_edgelist_reduced$replied_to), all_senders)
 length(no_data_alters)
 # Collect data for these users (no_data_alters) from Twitter. 
 # To that end, we will use the lookup_users function from rtweet package
@@ -222,9 +227,9 @@ length(no_data_alters)
 alters_data <- lookup_users(no_data_alters)
 
 # save the data
-saveRDS(alters_data, "data/raw_alters_data_20-01-2021.RData")
+saveRDS(alters_data, "data/raw_alters_data_28-01-2021.RData")
 # load the saved data (for offline work)
-# alters_data <- readRDS("data/raw_alters_data_04-01-2021.RData")
+# alters_data <- readRDS("data/raw_alters_data_28-01-2021.RData")
 
 glimpse(alters_data)
 # In addition to user data, the lookup_users() f. also returned users' tweets.
@@ -245,17 +250,17 @@ length(missing_alter)
 mentioned_edgelist_reduced %>%
   filter(!mentioned %in% missing_alter) %>%
   rename(ego=sender, alter=mentioned, mention_tie=weight) %>%
-  saveRDS(file = "data/mentions_edgelist_20-01-2020.RData")
+  saveRDS(file = "data/mentions_edgelist_28-01-2020.RData")
 
 replied_to_edgelist_reduced %>%
   filter(!replied_to %in% missing_alter) %>%
   rename(ego=sender, alter=replied_to, reply_to_tie=weight) %>%
-  saveRDS(file = "data/replied_to_edgelist_20-01-2020.RData")
+  saveRDS(file = "data/replied_to_edgelist_28-01-2020.RData")
 
 # Merge all available user data and store it in a file
 senders_data %>%
   rbind(alters_data) %>%
-  saveRDS("data/user_data_04-01-2020.RData")
+  saveRDS("data/user_data_28-01-2020.RData")
 
 # Do the clean up, that is, remove all objects from the environment, 
 # we won't need them any more
@@ -299,20 +304,12 @@ get_user_attrs <- function(twitter_user_data, users_screen_names) {
 }
 
 # Load user data; it will be used to add attributes to the nodes
-user_data <- readRDS("data/user_data_20-01-2020.RData")
+user_data <- readRDS("data/user_data_28-01-2020.RData")
 # Extract the set of attributes we are interested in 
-ego_attrs <- get_user_attrs(user_data, V(mention_net)$name)
-glimpse(ego_attrs)
+node_attrs <- get_user_attrs(user_data, V(mention_net)$name)
+# Sort based on the username, to match the order of vertex name attribute 
+node_attrs <- arrange(node_attrs, screen_name)                          
 
-# Extract attributes about users mentioned in tweets (alters)
-alter_attrs <- get_user_attrs(user_data, V(mention_net)$name)  
-glimpse(alter_attrs)
-
-# Merge attributes for all the actors in the 'mentioned' network 
-node_attrs <- rbind(ego_attrs, alter_attrs) %>% # merge the two data frames
-  distinct(screen_name, .keep_all = TRUE) %>%   # keep only distinct rows (= remove duplicates)
-  arrange(screen_name)                          # sort based on the username
-  
 head(node_attrs, n=10)
 summary(node_attrs[,-1])
 
@@ -320,7 +317,6 @@ summary(node_attrs[,-1])
 mention_net <- graph_from_data_frame(mention_edgelist, 
                                      vertices = node_attrs)
 summary(mention_net)
-summary(V(mention_net)$followers_count)
 
 
 # Let's now make use of the vertex attributes to better understand the graph.
@@ -353,14 +349,10 @@ plot(mention_net,
 ###
 
 
-##
-# 4. VISUALISE NETWORKS OF TWITTER USERS USING VISNETWORK
-##
+# If the overall graph is overly large for meaningful visualization,
+# we can take its giant component and create its visualization.
 
-# Since the overall graph is overly large for meaningful visualization
-# let's take its giant component and create its visualization.
-
-# We will start by identifying components (subgraphs) in the graph. 
+# To find the giant component, we start by identifying components (subgraphs) in the graph. 
 # Due to the sparsity of edges, we won't be able to identify 'strong' components, 
 # so, we will opt for 'weak' components (reminder: for 'strong' components, the 
 # directionality of edges is considered; for detection of 'weak' components, the 
@@ -401,6 +393,11 @@ plot(giant_comp,
 # To try to get a better insight into the network, we will use interactive plots of the
 # *visNetwork* R package.
 
+
+##
+# 4. VISUALISE NETWORKS OF TWITTER USERS USING VISNETWORK
+##
+
 # Note: for a tutorial on visNetwork and examples of use, see:
 # - Introduction to visNetwork, at:
 #   https://cran.r-project.org/web/packages/visNetwork/vignettes/Introduction-to-visNetwork.html 
@@ -415,27 +412,29 @@ plot(giant_comp,
 # - edges data.frame, with 'from' and 'to' columns (plus any additional columns with edge attributes)
 
 # Let's create those two (minimal) data frames:
-nodes_df <- data.frame(id=V(giant_comp)$name, stringsAsFactors = FALSE)
+# Note: if your network is overly large for a meaningful visualisation, visualise the
+# gigantic component (giant_comp) instead
+nodes_df <- data.frame(id=V(mention_net)$name, stringsAsFactors = FALSE)
 head(nodes_df)
-edges_df <- data.frame(as_edgelist(giant_comp), stringsAsFactors = FALSE)
+edges_df <- data.frame(as_edgelist(mention_net), stringsAsFactors = FALSE)
 colnames(edges_df) <- c('from', 'to')
 head(edges_df)
 # Now, we can create the simplest visualisation with visNetwork
 visNetwork(nodes = nodes_df, 
            edges = edges_df, 
-           main="Giant component of the Twitter mention network")
+           main="Twitter mention network")
 
 
 # Extend the nodes data frame with columns defining node color and size
 # Note: see visNodes for column naming rules
-nodes_df$color <- gc_colors
-nodes_df$size <- gc_size * 2
+nodes_df$color <- posts_for_color
+nodes_df$size <- followers_for_size * 2
 head(nodes_df)
 
 # Extend the edges data frame with columns defining edge width, color, 
 # if it is curvy or not, and if / how arrows are displayed.
 # Note: see visEdges for column naming and available options
-edges_df$width <- 1 + (E(giant_comp)$mention_tie / 2)
+edges_df$width <- 1 + (E(mention_net)$mention_tie / 2)
 edges_df$color <- 'slategray3'
 edges_df$smooth <- TRUE # should the edges be curved?
 edges_df$arrows <- 'to'
@@ -443,7 +442,7 @@ head(edges_df)
 
 visNetwork(nodes = nodes_df, 
            edges = edges_df, 
-           main="Giant component of the Twitter mention network",
+           main="Twitter mention network",
            footer = "Node color denotes the number of tweets, node size reflects the number of followers")
 
 
@@ -456,7 +455,7 @@ nodes_df$borderWidth <- 1.5     # node border width
 # First, remove the existing color attribute
 nodes_df <- nodes_df %>% select(-color)
 # Then, add new color-related attributes
-nodes_df$color.background <- gc_colors
+nodes_df$color.background <- posts_for_color
 nodes_df$color.border <- "black"
 nodes_df$color.highlight.background <- "orange" # color of the main body of a node when clicked
 nodes_df$color.highlight.border <- "darkred"    # color of the border when a node is clicked
@@ -464,7 +463,7 @@ nodes_df$color.highlight.border <- "darkred"    # color of the border when a nod
 # Run the visualization with the new parameters set
 visnet <- visNetwork(nodes = nodes_df, 
                      edges = edges_df, 
-                     main="Giant component of the Twitter-based mention network",
+                     main="Twitter-based mention network",
                      footer = "Node color denotes the number of tweets, 
                                 node size reflects the number of followers")
 visnet
