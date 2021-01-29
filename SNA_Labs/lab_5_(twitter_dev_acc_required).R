@@ -105,9 +105,9 @@ file.edit(".Renviron")
 
 # (optionally) save the results
 setwd("SNA_Labs")
-# saveRDS(tweets, 'data/trump_tapes_tweets_04-01-2021.RData')
+saveRDS(tweets, 'data/trump_tapes_tweets_04-01-2021.RData')
 # load the saved data (for offline work)
-tweets <- readRDS("data/trump_tapes_tweets_04-01-2021.RData")
+# tweets <- readRDS("data/trump_tapes_tweets_04-01-2021.RData")
 
 # Get a glimpse into the obtained dataset
 glimpse(tweets)
@@ -345,18 +345,10 @@ get_user_attrs <- function(twitter_user_data, users_screen_names) {
 # Load user data; it will be used to add attributes to the nodes
 user_data <- readRDS("data/user_data_04-01-2020.RData")
 # Extract the set of attributes we are interested in 
-ego_attrs <- get_user_attrs(user_data, V(mention_net)$name)
-glimpse(ego_attrs)
+node_attrs <- get_user_attrs(user_data, V(mention_net)$name)
+# Sort based on the username, to match the order of vertex name attribute 
+node_attrs <- arrange(node_attrs, screen_name)                          
 
-# Extract attributes about users mentioned in tweets (alters)
-alter_attrs <- get_user_attrs(user_data, V(mention_net)$name)  
-glimpse(alter_attrs)
-
-# Merge attributes for all the actors in the 'mentioned' network 
-node_attrs <- rbind(ego_attrs, alter_attrs) %>% # merge the two data frames
-  distinct(screen_name, .keep_all = TRUE) %>%   # keep only distinct rows (= remove duplicates)
-  arrange(screen_name)                          # sort based on the username
-  
 head(node_attrs, n=10)
 summary(node_attrs[,-1])
 
@@ -364,7 +356,6 @@ summary(node_attrs[,-1])
 mention_net <- graph_from_data_frame(mention_edgelist, 
                                      vertices = node_attrs)
 summary(mention_net)
-summary(V(mention_net)$followers_count)
 
 
 # Let's now make use of the vertex attributes to better understand the graph.
@@ -396,10 +387,6 @@ plot(mention_net,
 # based on the reply_to connection
 ###
 
-
-##
-# 4. VISUALISE NETWORKS OF TWITTER USERS USING VISNETWORK
-##
 
 # Since the overall graph is overly large for meaningful visualization
 # let's take its giant component and create its visualization.
@@ -444,6 +431,10 @@ plot(giant_comp,
 # Better than the previous graph, but still not sufficiently clear. 
 # To try to get a better insight into the network, we will use interactive plots of the
 # *visNetwork* R package.
+
+##
+# 4. VISUALISE NETWORKS OF TWITTER USERS USING VISNETWORK
+##
 
 # Note: for a tutorial on visNetwork and examples of use, see:
 # - Introduction to visNetwork, at:

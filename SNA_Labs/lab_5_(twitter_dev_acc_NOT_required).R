@@ -51,8 +51,8 @@ library(igraph)
 ###
 
 ?search_tweets
-tweets <- search_tweets(q = "#ParisClimateAgreement", type = 'recent',
-                        lang="en", n = 15000, include_rts = FALSE)
+tweets <- search_tweets(q = "#ParisClimateAgreement OR #ParisClimateAccord", lang="en",
+                        type = 'recent', n = 15000, include_rts = FALSE)
 
 # Note: to more easily create complex queries, that is queries enabled by 
 # Twitter advanced search (https://twitter.com/search-advanced),
